@@ -1,3 +1,11 @@
+# Project Title
+
+Project: Function Frontend
+
+## Description
+
+This program is a smart contract written in Solidity, a programming language used for developing contracts on the Ethereum blockchain. The contract allows the owner to manage funds by depositing and withdrawing Ether, as well as transferring ownership of the contract. It includes basic functionalities such as checking the balance, depositing funds, withdrawing funds, and transferring ownership to a new address.
+
 # Starter Next/Hardhat Project
 
 After cloning the github, you will want to do the following to get the code running on your computer.
@@ -10,3 +18,15 @@ After cloning the github, you will want to do the following to get the code runn
 
 After this, the project will be running on your localhost. 
 Typically at http://localhost:3000/
+
+## Authors
+
+Contributors names and contact info
+
+Lance Polo Paras
+201911769@fit.edu.ph
+
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details
