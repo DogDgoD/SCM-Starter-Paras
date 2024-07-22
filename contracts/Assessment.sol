@@ -1,54 +1,38 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-contract Assessment {
-    address payable public owner;
-    uint256 public balance;
+contract ErrorHandlingExample {
 
-    event Deposit(uint256 amount);
-    event Withdraw(uint256 amount);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    // State variable to store the owner's address
+    address public owner;
 
-    constructor(uint initBalance) payable {
-        owner = payable(msg.sender);
-        balance = initBalance;
+    // State variable to store a value
+    uint256 public value;
+
+    // Constructor to set the owner of the contract
+    constructor() {
+        owner = msg.sender;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "You are not the owner");
-        _;
+    // Function to set a value with require statement
+    function setValue(uint256 _value) public {
+        // Ensure the sender is the owner
+        require(msg.sender == owner, "Caller is not the owner");
+        value = _value;
     }
 
-    function getBalance() public view returns(uint256) {
-        return balance;
+    // Function to divide two numbers with assert statement
+    function divide(uint256 a, uint256 b) public pure returns (uint256) {
+        // Ensure denominator is not zero
+        assert(b != 0);
+        return a / b;
     }
 
-    function deposit(uint256 _amount) public payable onlyOwner {
-        uint _previousBalance = balance;
-        balance += _amount;
-        assert(balance == _previousBalance + _amount);
-        emit Deposit(_amount);
-    }
-
-    error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
-
-    function withdraw(uint256 _withdrawAmount) public onlyOwner {
-        uint _previousBalance = balance;
-        if (balance < _withdrawAmount) {
-            revert InsufficientBalance({
-                balance: balance,
-                withdrawAmount: _withdrawAmount
-            });
+    // Function to revert the transaction based on condition
+    function revertExample(uint256 _value) public pure {
+        // Revert if value is less than 100
+        if (_value < 100) {
+            revert("Value must be at least 100");
         }
-        balance -= _withdrawAmount;
-        assert(balance == (_previousBalance - _withdrawAmount));
-        emit Withdraw(_withdrawAmount);
-    }
-
-    function transferOwnership(address payable _newOwner) public onlyOwner {
-        require(_newOwner != address(0), "New owner is the zero address");
-        address previousOwner = owner;
-        owner = _newOwner;
-        emit OwnershipTransferred(previousOwner, _newOwner);
     }
 }
