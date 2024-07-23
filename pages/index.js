@@ -7,22 +7,30 @@ export default function HomePage() {
   const [account, setAccount] = useState(undefined);
   const [atm, setATM] = useState(undefined);
   const [balance, setBalance] = useState(undefined);
-  const [newOwner, setNewOwner] = useState("");
+  const [depositAmount, setDepositAmount] = useState(1); // Default deposit amount
+  const [withdrawAmount, setWithdrawAmount] = useState(1); // Default withdraw amount
 
-  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Update with your contract address
+  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
   const atmABI = atm_abi.abi;
 
   const getWallet = async () => {
     if (window.ethereum) {
       setEthWallet(window.ethereum);
-      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+    }
+
+    if (ethWallet) {
+      const accounts = await ethWallet.request({ method: "eth_accounts" });
       handleAccount(accounts);
     }
   };
 
   const handleAccount = (accounts) => {
     if (accounts.length > 0) {
+      console.log("Account connected: ", accounts[0]);
       setAccount(accounts[0]);
+    } else {
+      console.log("No account found");
+      setAccount(undefined);
     }
   };
 
@@ -34,78 +42,57 @@ export default function HomePage() {
 
     const accounts = await ethWallet.request({ method: "eth_requestAccounts" });
     handleAccount(accounts);
+
+    // once wallet is set we can get a reference to our deployed contract
     getATMContract();
+  };
+
+  const disconnectAccount = () => {
+    setAccount(undefined);
+    setATM(undefined);
+    setBalance(undefined);
   };
 
   const getATMContract = () => {
     const provider = new ethers.providers.Web3Provider(ethWallet);
     const signer = provider.getSigner();
     const atmContract = new ethers.Contract(contractAddress, atmABI, signer);
+
     setATM(atmContract);
   };
 
   const getBalance = async () => {
     if (atm) {
-      const balance = await atm.getBalance();
-      setBalance(balance.toNumber());
+      const balanceBigNumber = await atm.getBalance();
+      setBalance(balanceBigNumber.toNumber());
     }
   };
 
   const deposit = async () => {
     if (atm) {
-      try {
-        let tx = await atm.deposit(1, { value: ethers.utils.parseEther("1") });
-        await tx.wait();
-        getBalance();
-      } catch (error) {
-        console.error("Deposit failed", error);
-        alert("Deposit failed. See console for details.");
-      }
+      const tx = await atm.deposit(depositAmount);
+      await tx.wait();
+      getBalance();
     }
   };
 
   const withdraw = async () => {
     if (atm) {
-      try {
-        let tx = await atm.withdraw(1);
-        await tx.wait();
-        getBalance();
-      } catch (error) {
-        console.error("Withdraw failed", error);
-        alert("Withdraw failed. See console for details.");
-      }
-    }
-  };
-
-  const transferOwnership = async () => {
-    if (!ethers.utils.isAddress(newOwner)) {
-      alert("Please enter a valid Ethereum address");
-      return;
-    }
-
-    if (atm) {
-      try {
-        let tx = await atm.transferOwnership(newOwner);
-        await tx.wait();
-        alert("Ownership transferred successfully");
-      } catch (error) {
-        console.error("Transfer ownership failed", error);
-        alert("Transfer ownership failed. See console for details.");
-      }
+      const tx = await atm.withdraw(withdrawAmount);
+      await tx.wait();
+      getBalance();
     }
   };
 
   const initUser = () => {
+    // Check to see if user has Metamask
     if (!ethWallet) {
-      return <p>Please install MetaMask to use this ATM.</p>;
+      return <p>Please install Metamask in order to use this ATM.</p>;
     }
 
+    // Check to see if user is connected. If not, connect to their account
     if (!account) {
-      return (
-        <button onClick={connectAccount}>
-          Please connect your MetaMask wallet
-        </button>
-      );
+      return <button onClick={connectAccount}>Please connect your Metamask wallet</button>;
     }
 
     if (balance === undefined) {
@@ -116,17 +103,28 @@ export default function HomePage() {
       <div>
         <p>Your Account: {account}</p>
         <p>Your Balance: {balance}</p>
-        <button onClick={deposit}>Deposit 1 ETH</button>
-        <button onClick={withdraw}>Withdraw 1 ETH</button>
+        
         <div>
           <input
-            type="text"
-            placeholder="New Owner Address"
-            value={newOwner}
-            onChange={(e) => setNewOwner(e.target.value)}
+            type="number"
+            value={depositAmount}
+            onChange={(e) => setDepositAmount(parseFloat(e.target.value))}
+            placeholder="Amount to deposit"
           />
-          <button onClick={transferOwnership}>Transfer Ownership</button>
+          <button onClick={deposit}>Deposit</button>
         </div>
+
+        <div>
+          <input
+            type="number"
+            value={withdrawAmount}
+            onChange={(e) => setWithdrawAmount(parseFloat(e.target.value))}
+            placeholder="Amount to withdraw"
+          />
+          <button onClick={withdraw}>Withdraw</button>
+        </div>
+
+        <button onClick={disconnectAccount}>Disconnect</button>
       </div>
     );
   };
@@ -144,6 +142,12 @@ export default function HomePage() {
       <style jsx>{`
         .container {
           text-align: center;
+        }
+        div {
+          margin: 10px;
+        }
+        input {
+          margin-right: 10px;
         }
       `}</style>
     </main>
